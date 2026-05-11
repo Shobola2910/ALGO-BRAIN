@@ -1154,15 +1154,23 @@
         // GOOGLE GEMINI API — bepul, kuniga 1500 so'rov
         // ============================================================
         async function geminiGaYuborish(savolMatni, fayl) {
-            // Suhbat tarixini Gemini formatiga (user/model) o'tkazish
-            const tarix = suhbatTarixi.map(x => ({
-                role: x.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: x.content || '' }],
-            }));
+            // System promptni birinchi xabar juftligi sifatida yuborish
+            // (systemInstruction o'rniga — barcha versiyalarda ishlaydi)
+            const contents = [
+                { role: 'user',  parts: [{ text: systemPromptYaratish(profil) }] },
+                { role: 'model', parts: [{ text: 'Tushundim. Menejer sifatida javob beraman.' }] },
+            ];
+
+            // Oldingi suhbat tarixini qo'shish
+            suhbatTarixi.forEach(x => {
+                contents.push({
+                    role: x.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: x.content || '' }],
+                });
+            });
 
             // Joriy xabar uchun parts tayyorlash
             const joriyParts = [];
-
             if (fayl) {
                 if (fayl.tur === 'image') {
                     joriyParts.push({ inlineData: { mimeType: fayl.mediaType, data: fayl.data } });
@@ -1174,9 +1182,10 @@
             }
             if (savolMatni) joriyParts.push({ text: savolMatni });
 
-            // Tarixga qo'shish (eksport uchun)
+            contents.push({ role: 'user', parts: joriyParts });
+
+            // Tarixga saqlash (eksport uchun)
             suhbatTarixi.push({ role: 'user', content: savolMatni || '[Fayl yuborildi]' });
-            tarix.push({ role: 'user', parts: joriyParts });
 
             const javob = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKalit}`,
@@ -1184,8 +1193,7 @@
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     body: JSON.stringify({
-                        systemInstruction: { parts: [{ text: systemPromptYaratish(profil) }] },
-                        contents: tarix,
+                        contents,
                         generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
                     }),
                 }
