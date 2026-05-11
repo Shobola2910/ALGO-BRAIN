@@ -495,6 +495,20 @@
 </head>
 <body>
 
+    <!-- API Key modal -->
+    <div class="modal-overlay" id="apiModal">
+        <div class="modal">
+            <div class="modal-logo">AB</div>
+            <h2>API kalitini kiriting</h2>
+            <p>ALGO BRAIN ishlashi uchun Anthropic API kaliti kerak.<br>
+               Kalit faqat sizning brauzeringizda saqlanadi.</p>
+            <input class="modal-input" type="password" id="apiKeyInput"
+                   placeholder="sk-ant-..." autocomplete="off"/>
+            <div class="modal-error" id="modalError">Kalit noto'g'ri yoki bo'sh</div>
+            <button class="modal-btn" onclick="kalitSaqlash()">Boshlash</button>
+        </div>
+    </div>
+
     <!-- Menejer profili panel backdrop -->
     <div class="panel-backdrop" id="panelBackdrop" onclick="panelYopish()"></div>
 
@@ -649,6 +663,12 @@
                     </button>
                 </div>
             </div>
+            <!-- API kalit tugmasi -->
+            <button class="icon-btn" onclick="kalitOzgartirish()" title="API kalit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+            </button>
             <div class="status">
                 <div class="status-dot"></div>
                 Faol
@@ -747,6 +767,7 @@
         // ============================================================
         // HOLAT O'ZGARUVCHILARI
         // ============================================================
+        let apiKalit     = localStorage.getItem('algo_brain_key') || '';
         let profil       = sozlamalarYuklash();
         let suhbatTarixi = [];
         let yuborilmoqda = false;
@@ -754,9 +775,39 @@
 
         // Sahifa yuklanganda
         (function boshlash() {
+            if (!apiKalit) {
+                document.getElementById('apiModal').classList.remove('yashirin');
+            } else {
+                document.getElementById('apiModal').classList.add('yashirin');
+            }
             headerYangilash();
             xushKelibsizYangilash();
         })();
+
+        // ============================================================
+        // API KALIT
+        // ============================================================
+        function kalitSaqlash() {
+            const kiritilgan = document.getElementById('apiKeyInput').value.trim();
+            const xato = document.getElementById('modalError');
+            if (!kiritilgan || !kiritilgan.startsWith('sk-ant-')) {
+                xato.style.display = 'block'; return;
+            }
+            xato.style.display = 'none';
+            apiKalit = kiritilgan;
+            localStorage.setItem('algo_brain_key', apiKalit);
+            document.getElementById('apiModal').classList.add('yashirin');
+        }
+
+        function kalitOzgartirish() {
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('modalError').style.display = 'none';
+            document.getElementById('apiModal').classList.remove('yashirin');
+        }
+
+        document.getElementById('apiKeyInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') kalitSaqlash();
+        });
 
         // Sarlavha subtitlini yangilash
         function headerYangilash() {
@@ -1100,79 +1151,70 @@
         }
 
         // ============================================================
-        // DEMO JAVOBLAR — kalit so'zlar bo'yicha
+        // CLAUDE API
         // ============================================================
-        const demoJavoblar = [
-            {
-                kalitlar: ['kechikdi', 'kechikmoq', 'kech', 'kelmadi', 'late', 'vaqtida'],
-                javob: 'Haydovchi kechiksa — avval sababini aniqla. Ob-havo yoki trafik bo\'lsa, tushunarli. Uzrsiz kechikish bo\'lsa — ogohlantir va jurnalga yoz. Ikkinchi marta bo\'lsa menga xabar ber.',
-            },
-            {
-                kalitlar: ['yo\'l', 'marshrut', 'qaysi yo\'l', 'qayerdan', 'route', 'adashdi'],
-                javob: 'Marshrut bo\'yicha: GPS dan foydalansin, o\'z bilganicha ketmasin. Muammo bo\'lsa — darhol menga xabar ber, men alternativ ko\'rsataman.',
-            },
-            {
-                kalitlar: ['mashina', 'avto', 'buzildi', 'nosoz', 'ta\'mir', 'texnik', 'ishlamay'],
-                javob: 'Mashina to\'xtab qolsa:\n1. Xavfsiz joyga tort\n2. Menga darhol qo\'ng\'iroq qil\n3. O\'zing ta\'mirlamoqchi bo\'lma\n\nMen texnik xizmat bilan bog\'lanaman.',
-            },
-            {
-                kalitlar: ['mijoz', 'client', 'shikoyat', 'norozi', 'xafa', 'mushtari'],
-                javob: 'Mijoz shikoyat qilsa:\n1. Tinglang, to\'xtatmang\n2. Kechirim so\'rang\n3. Muammoni yozib oling\n4. Menga darhol xabar bering\n\nO\'zingiz va\'da bermang — bu mening vazifattim.',
-            },
-            {
-                kalitlar: ['maosh', 'pul', 'to\'lov', 'oylik', 'haq', 'salary', 'pay'],
-                javob: 'To\'lov masalalari faqat men orqali hal qilinadi. Bugun yoki ertaga gaplashamiz. Hozircha ishni davom ettiravering.',
-            },
-            {
-                kalitlar: ['dam olish', 'bayram', 'ta\'til', 'ishlamayman', 'off', 'yosh'],
-                javob: 'Dam olish arizasi kamida 3 kun oldin berilishi kerak. Menga yozing — jadval bo\'yicha ko\'rib chiqaman.',
-            },
-            {
-                kalitlar: ['rasm', 'photo', 'yubordi', 'ko\'r', 'qaradi'],
-                javob: 'Rasmni ko\'rdim. Holat haqida qo\'shimcha ma\'lumot bering — nima bo\'ldi, qachon, qayerda. Shunda aniq ko\'rsatma beraman.',
-            },
-            {
-                kalitlar: ['fayl', 'hujjat', 'pdf', 'document'],
-                javob: 'Hujjatni qabul qildim. Ko\'rib chiqaman. Savolingiz bo\'lsa — ayting.',
-            },
-            {
-                kalitlar: ['nima qil', 'qanday qil', 'yordam', 'bilmayman', 'tushunmadim', 'nima bo\'l'],
-                javob: 'Muammoni aniqroq ayt: nima bo\'ldi, qachon, kim bilan. Shunda aniq yo\'riqnoma beraman.',
-            },
-            {
-                kalitlar: ['salom', 'assalomu', 'xayr', 'hayr', 'rahmat', 'ok', 'tushunarli'],
-                javob: 'Qabul. Boshqa savol bo\'lsa — ayting.',
-            },
-        ];
+        async function claudeGaYuborish(savolMatni, fayl) {
+            let content;
 
-        // Savolga mos demo javob topish
-        function demoJavobTopish(savol, fayl) {
-            // Fayl yuborilgan bo'lsa
             if (fayl) {
-                if (fayl.tur === 'image') return 'Rasmni qabul qildim. Ko\'rib chiqaman. Bu haqida nima demoqchi edingiz?';
-                if (fayl.tur === 'document') return 'Hujjatni oldim. Ko\'rib chiqaman va javob beraman.';
-                return `"${fayl.nomi}" faylini qabul qildim.`;
-            }
-
-            const kichik = savol.toLowerCase();
-            for (const element of demoJavoblar) {
-                for (const kalit of element.kalitlar) {
-                    if (kichik.includes(kalit)) return element.javob;
+                const qismlar = [];
+                if (fayl.tur === 'image') {
+                    qismlar.push({ type:'image', source:{ type:'base64', media_type:fayl.mediaType, data:fayl.data } });
+                } else if (fayl.tur === 'document') {
+                    qismlar.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:fayl.data } });
+                } else if (fayl.tur === 'matn') {
+                    savolMatni = `${savolMatni}\n\n[Fayl: ${fayl.nomi}]\n${fayl.matn}`;
                 }
+                if (savolMatni) qismlar.push({ type:'text', text:savolMatni });
+                content = qismlar;
+            } else {
+                content = savolMatni;
             }
 
-            // Hech narsa mos kelmasa
-            return 'Tushundim. Holat haqida qo\'shimcha ma\'lumot bering — nima bo\'ldi, qachon, kim bilan. Shunda aniq ko\'rsatma beraman.';
+            suhbatTarixi.push({ role:'user', content });
+
+            const javob = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': apiKalit,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true',
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: 'claude-haiku-4-5-20251001',
+                    max_tokens: 1024,
+                    system: systemPromptYaratish(profil),
+                    messages: suhbatTarixi,
+                }),
+            });
+
+            if (!javob.ok) {
+                const xato = await javob.json().catch(() => ({}));
+                if (javob.status === 401) {
+                    localStorage.removeItem('algo_brain_key');
+                    apiKalit = '';
+                    kalitOzgartirish();
+                    throw new Error('API kalit noto\'g\'ri. Qayta kiriting.');
+                }
+                throw new Error(xato.error?.message || `Xato: ${javob.status}`);
+            }
+
+            const malumot = await javob.json();
+            const javobMatni = malumot.content[0].text;
+            suhbatTarixi.push({ role:'assistant', content:javobMatni });
+            return javobMatni;
         }
 
         // ============================================================
         // XABAR YUBORISH
         // ============================================================
-        function xabarYuborish() {
+        async function xabarYuborish() {
             if (yuborilmoqda) return;
             const input = document.getElementById('messageInput');
             const matn  = input.value.trim();
             if (!matn && !tanlananFayl) return;
+            if (!apiKalit) { kalitOzgartirish(); return; }
 
             yuborilmoqda = true;
             document.getElementById('sendBtn').disabled = true;
@@ -1183,19 +1225,18 @@
             faylOchirish();
             yozilmoqdaKorsatish();
 
-            // Suhbat tarixini saqlash (eksport uchun)
-            suhbatTarixi.push({ role: 'user', content: matn || '[Fayl yuborildi]' });
-
-            // Kechikish bilan javob — haqiqiy his uchun
-            setTimeout(() => {
+            try {
+                const javob = await claudeGaYuborish(matn, yuborilayotganFayl);
                 yozilmoqdaOchirish();
-                const javob = demoJavobTopish(matn, yuborilayotganFayl);
                 xabarQosish(javob, 'manager');
-                suhbatTarixi.push({ role: 'assistant', content: javob });
+            } catch (err) {
+                yozilmoqdaOchirish();
+                if (apiKalit) xabarQosish(`Xato: ${err.message}`, 'xato manager');
+            } finally {
                 yuborilmoqda = false;
                 document.getElementById('sendBtn').disabled = false;
                 input.focus();
-            }, 900 + Math.random() * 700);
+            }
         }
 
         document.getElementById('messageInput').addEventListener('keydown', function(e) {
