@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALGO BRAIN</title>
+    <style>
+        /* --- Asosiy sozlamalar --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d0d14;
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ============================================================
+           API KEY MODAL
+        ============================================================ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+        .modal-overlay.yashirin { display: none; }
+
+        .modal {
+            background: #13131f;
+            border: 1px solid #2a2a40;
+            border-radius: 20px;
+            padding: 36px 32px;
+            max-width: 420px; width: 100%;
+        }
+        .modal-logo {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #7c6fff, #3b82f6);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 15px; color: white;
+            margin-bottom: 20px;
+        }
+        .modal h2 { font-size: 20px; color: #fff; margin-bottom: 8px; }
+        .modal p  { font-size: 13px; color: #555570; line-height: 1.6; margin-bottom: 24px; }
+
+        .modal-input {
+            width: 100%;
+            background: #0d0d14;
+            border: 1.5px solid #1e1e30;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #e0e0e0; font-size: 14px; font-family: monospace;
+            outline: none; transition: border-color 0.2s; margin-bottom: 14px;
+        }
+        .modal-input:focus { border-color: #7c6fff; }
+        .modal-input::placeholder { color: #333350; font-family: inherit; }
+
+        .modal-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #7c6fff, #3b82f6);
+            border: none; border-radius: 12px;
+            padding: 13px; color: white;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .modal-btn:hover { opacity: 0.88; }
+        .modal-error { font-size: 12px; color: #ef4444; margin-bottom: 12px; display: none; }
+
+        /* ============================================================
+           SARLAVHA
+        ============================================================ */
+        .header {
+            background: #13131f;
+            padding: 14px 24px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #1e1e30;
+            flex-shrink: 0; z-index: 10;
+        }
+        .header-logo {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #7c6fff, #3b82f6);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: white;
+        }
+        .header-info h1 { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .header-info p  { font-size: 12px; color: #666688; margin-top: 1px; }
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+        .status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #22c55e; }
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #22c55e; border-radius: 50%;
+            animation: miltilla 2s infinite;
+        }
+        @keyframes miltilla { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .icon-btn {
+            width: 34px; height: 34px;
+            background: none;
+            border: 1px solid #1e1e30;
+            border-radius: 9px;
+            color: #555570; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .icon-btn:hover { border-color: #7c6fff; color: #7c6fff; background: #13132a; }
+        .icon-btn svg { width: 16px; height: 16px; }
+        .icon-btn.faol { border-color: #7c6fff; color: #7c6fff; background: #13132a; }
+
+        /* --- Yangi suhbat tasdiqlash popover --- */
+        .confirm-pop {
+            position: absolute; top: calc(100% + 10px); right: 0;
+            background: #1a1a2e;
+            border: 1px solid #2a2a44;
+            border-radius: 14px;
+            padding: 16px 18px;
+            width: 220px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            z-index: 50;
+            animation: chiqqinda 0.2s ease;
+        }
+        .confirm-pop p {
+            font-size: 13px; color: #aaaacc;
+            line-height: 1.5; margin-bottom: 14px;
+        }
+        .confirm-pop-btns { display: flex; gap: 8px; }
+        .confirm-yes {
+            flex: 1; background: #ef4444; border: none;
+            border-radius: 8px; padding: 8px;
+            color: white; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .confirm-yes:hover { opacity: 0.85; }
+        .confirm-no {
+            flex: 1; background: none;
+            border: 1px solid #2a2a44;
+            border-radius: 8px; padding: 8px;
+            color: #8888aa; font-size: 13px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .confirm-no:hover { border-color: #555570; color: #c0c0d8; }
+        /* Tugma container — popover uchun relative pozitsiya */
+        .new-chat-wrap { position: relative; }
+
+        /* ============================================================
+           PROFIL PANEL — o'ngdan siljib keladi
+        ============================================================ */
+        .panel-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 90;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .panel-backdrop.korsatish { opacity: 1; pointer-events: auto; }
+
+        .settings-panel {
+            position: fixed; top: 0; right: 0; bottom: 0;
+            width: 360px; max-width: 95vw;
+            background: #10101c;
+            border-left: 1px solid #1e1e30;
+            z-index: 100;
+            display: flex; flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .settings-panel.ochiq { transform: translateX(0); }
+
+        /* Panel sarlavhasi */
+        .panel-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #1a1a28;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .panel-header h2 { font-size: 16px; font-weight: 700; color: #fff; }
+        .panel-header p  { font-size: 12px; color: #444460; margin-top: 2px; }
+
+        .panel-close {
+            width: 30px; height: 30px;
+            background: none; border: none;
+            color: #555570; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-size: 18px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .panel-close:hover { color: #e0e0e0; background: #1a1a28; }
+
+        /* Panel body */
+        .panel-body {
+            flex: 1; overflow-y: auto;
+            padding: 24px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* Panel scrollbar */
+        .panel-body::-webkit-scrollbar { width: 3px; }
+        .panel-body::-webkit-scrollbar-thumb { background: #1e1e30; border-radius: 2px; }
+
+        /* Form elementlari */
+        .field-group { display: flex; flex-direction: column; gap: 7px; }
+
+        .field-label {
+            font-size: 12px; font-weight: 600;
+            color: #8888aa; text-transform: uppercase; letter-spacing: 0.6px;
+        }
+
+        .field-input, .field-textarea, .field-select {
+            background: #0d0d14;
+            border: 1.5px solid #1e1e30;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #e0e0e0; font-size: 14px;
+            font-family: inherit; outline: none;
+            transition: border-color 0.2s; width: 100%;
+        }
+        .field-input:focus,
+        .field-textarea:focus,
+        .field-select:focus { border-color: #7c6fff; }
+        .field-input::placeholder,
+        .field-textarea::placeholder { color: #2a2a3e; }
+        .field-textarea { resize: none; line-height: 1.6; }
+        .field-select { cursor: pointer; appearance: none; -webkit-appearance: none; }
+        .field-select option { background: #13131f; }
+
+        /* Uslub tanlash — radio kartalar */
+        .style-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .style-card {
+            background: #0d0d14;
+            border: 1.5px solid #1e1e30;
+            border-radius: 10px; padding: 10px 12px;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .style-card:hover { border-color: #3a3a5a; }
+        .style-card.tanlangan { border-color: #7c6fff; background: #13122a; }
+        .style-card input[type="radio"] { display: none; }
+        .style-card-icon { font-size: 18px; }
+        .style-card-text { font-size: 12px; color: #8888aa; line-height: 1.3; }
+        .style-card.tanlangan .style-card-text { color: #c0b8ff; }
+
+        /* Ajratgich chiziq */
+        .divider {
+            height: 1px; background: #1a1a28;
+            margin: 4px 0;
+        }
+
+        /* Yaratilgan prompt preview */
+        .prompt-preview {
+            background: #0a0a12;
+            border: 1px solid #1a1a28;
+            border-radius: 10px; padding: 12px 14px;
+            font-size: 12px; color: #444460;
+            line-height: 1.7;
+            max-height: 120px; overflow-y: auto;
+            white-space: pre-wrap; font-family: monospace;
+        }
+
+        /* Panel footer — saqlash tugmasi */
+        .panel-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #1a1a28;
+            flex-shrink: 0;
+        }
+
+        .save-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #7c6fff, #3b82f6);
+            border: none; border-radius: 12px;
+            padding: 13px; color: white;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .save-btn:hover { opacity: 0.88; }
+
+        /* Saqlandi bildirishnomasi */
+        .toast {
+            position: fixed; bottom: 90px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #22c55e; color: white;
+            padding: 10px 20px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            opacity: 0; pointer-events: none;
+            transition: all 0.3s; z-index: 300;
+            white-space: nowrap;
+        }
+        .toast.korsatish { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ============================================================
+           CHAT HUDUDI
+        ============================================================ */
+        .chat-area {
+            flex: 1; overflow-y: auto;
+            padding: 28px 24px;
+            display: flex; flex-direction: column; gap: 18px;
+        }
+
+        .welcome { text-align: center; padding: 48px 24px; }
+        .welcome-icon { font-size: 48px; margin-bottom: 16px; }
+        .welcome h2 { font-size: 22px; color: #7c6fff; margin-bottom: 10px; }
+        .welcome p  { font-size: 14px; line-height: 1.7; color: #444460; }
+        .welcome-name { color: #9d94ff; font-weight: 600; }
+
+        /* --- Xabar pufakchalari --- */
+        .message {
+            display: flex; align-items: flex-start; gap: 10px;
+            max-width: 80%;
+            animation: chiqqinda 0.25s ease;
+        }
+        @keyframes chiqqinda { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+        .message.user    { align-self: flex-end;   flex-direction: row-reverse; }
+        .message.manager { align-self: flex-start; }
+
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0;
+        }
+        .avatar.manager-avatar { background: linear-gradient(135deg,#7c6fff,#3b82f6); color:#fff; }
+        .avatar.user-avatar    { background: #1e1e2e; color:#8888aa; border:1px solid #2a2a3e; }
+
+        .bubble-wrap { display: flex; flex-direction: column; }
+
+        .bubble {
+            padding: 11px 16px; border-radius: 16px;
+            line-height: 1.65; font-size: 14px;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .message.user    .bubble { background:#3b5bdb; color:#fff; border-bottom-right-radius:4px; }
+        .message.manager .bubble { background:#17172a; color:#d8d8ee; border-bottom-left-radius:4px; border:1px solid #1e1e30; }
+        .message.xato    .bubble { background:#2a1520; color:#f87171; border-color:#3a1828; }
+
+        .message-time { font-size:11px; color:#44445a; margin-top:5px; padding:0 4px; }
+        .message.user .message-time { text-align:right; }
+
+        .chat-image { max-width:260px; max-height:200px; border-radius:10px; display:block; margin-bottom:8px; object-fit:cover; }
+        .chat-file  { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); border-radius:8px; padding:8px 12px; margin-bottom:8px; }
+        .chat-file-icon { font-size:20px; }
+        .chat-file-name { font-size:12px; opacity:0.8; word-break:break-all; }
+
+        /* Yozilmoqda */
+        .typing-dots { display:flex; align-items:center; gap:5px; padding:4px 2px; }
+        .dot { width:7px; height:7px; background:#7c6fff; border-radius:50%; animation:sakrash 1.2s infinite; }
+        .dot:nth-child(2){animation-delay:0.2s} .dot:nth-child(3){animation-delay:0.4s}
+        @keyframes sakrash { 0%,60%,100%{transform:translateY(0);opacity:0.5} 30%{transform:translateY(-7px);opacity:1} }
+
+        /* ============================================================
+           INPUT HUDUDI
+        ============================================================ */
+        .input-area {
+            padding: 0 24px 18px;
+            background: #0d0d14;
+            border-top: 1px solid #1a1a28;
+            flex-shrink: 0;
+        }
+
+        .preview-area { display:none; padding:10px 0 6px; }
+        .preview-area.korsatish { display:flex; }
+
+        .preview-item {
+            position:relative; display:inline-flex; align-items:center; gap:8px;
+            background:#17172a; border:1px solid #2a2a40; border-radius:10px; padding:8px 12px;
+            max-width:220px;
+        }
+        .preview-thumb { width:40px; height:40px; border-radius:6px; object-fit:cover; }
+        .preview-file-icon { font-size:22px; }
+        .preview-info { display:flex; flex-direction:column; min-width:0; }
+        .preview-name { font-size:12px; color:#c0c0d8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+        .preview-type { font-size:11px; color:#555570; margin-top:1px; }
+        .preview-remove {
+            position:absolute; top:-6px; right:-6px;
+            width:18px; height:18px;
+            background:#ef4444; border:none; border-radius:50%;
+            color:white; font-size:12px; font-weight:700;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+        }
+        .preview-remove:hover { background:#dc2626; }
+
+        .input-wrapper {
+            display:flex; align-items:flex-end; gap:10px;
+            background:#13131f; border:1.5px solid #1e1e30;
+            border-radius:16px; padding:10px 14px;
+            transition:border-color 0.2s;
+        }
+        .input-wrapper:focus-within { border-color:#7c6fff; }
+
+        .attach-btn {
+            width:34px; height:34px; background:none; border:none;
+            color:#444460; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            border-radius:8px; flex-shrink:0; transition:color 0.2s,background 0.2s;
+        }
+        .attach-btn:hover { color:#7c6fff; background:#1a1a2e; }
+        .attach-btn svg { width:20px; height:20px; }
+        #faylInput { display:none; }
+
+        textarea {
+            flex:1; background:transparent; border:none; outline:none;
+            color:#e0e0e0; font-size:14px; font-family:inherit;
+            resize:none; max-height:130px; line-height:1.55;
+        }
+        textarea::placeholder { color:#3a3a52; }
+
+        .send-btn {
+            width:36px; height:36px;
+            background:linear-gradient(135deg,#7c6fff,#3b82f6);
+            border:none; border-radius:10px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; transition:transform 0.15s,opacity 0.15s;
+        }
+        .send-btn:hover  { opacity:0.85; transform:scale(1.05); }
+        .send-btn:active { transform:scale(0.93); }
+        .send-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+        .send-btn svg { width:17px; height:17px; fill:white; }
+
+        .input-hint { font-size:11px; color:#2a2a3e; text-align:center; padding:6px 0 0; }
+
+        /* Scrollbar */
+        .chat-area::-webkit-scrollbar { width:4px; }
+        .chat-area::-webkit-scrollbar-track { background:transparent; }
+        .chat-area::-webkit-scrollbar-thumb { background:#1e1e30; border-radius:2px; }
+
+        /* ============================================================
+           EKSPORT DROPDOWN
+        ============================================================ */
+        .export-wrap { position: relative; }
+        .export-pop {
+            position: absolute; top: calc(100% + 10px); right: 0;
+            background: #1a1a2e; border: 1px solid #2a2a44;
+            border-radius: 12px; padding: 6px;
+            width: 190px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            z-index: 50;
+            animation: chiqqinda 0.2s ease;
+        }
+        .export-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            font-size: 13px; color: #aaaacc;
+            cursor: pointer; transition: background 0.15s, color 0.15s;
+            border: none; background: none; width: 100%; text-align: left;
+        }
+        .export-item:hover { background: #22223a; color: #e0e0e0; }
+        .export-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+
+        /* ============================================================
+           MOBIL — 640px gacha
+        ============================================================ */
+        @media (max-width: 640px) {
+            /* Sarlavha */
+            .header { padding: 11px 14px; gap: 9px; }
+            .header-logo { width: 36px; height: 36px; font-size: 11px; border-radius: 10px; }
+            .header-info h1 { font-size: 15px; }
+            .header-info p  { display: none; }
+            .header-actions { gap: 7px; }
+            .status span:last-child { display: none; }
+
+            /* Chat */
+            .chat-area { padding: 16px 14px; gap: 14px; }
+            .message { max-width: 90%; }
+            .welcome { padding: 32px 16px; }
+            .welcome-icon { font-size: 40px; }
+            .welcome h2 { font-size: 18px; }
+
+            /* Input */
+            .input-area { padding: 0 12px 14px; }
+            .input-hint { display: none; }
+            .preview-area { padding: 8px 0 4px; }
+
+            /* Profil paneli — to'liq ekran */
+            .settings-panel { width: 100%; border-left: none; }
+            .panel-body { padding: 18px; }
+
+            /* Popoverlar — mobilda chapdan chiqmasin */
+            .confirm-pop,
+            .export-pop { right: 0; left: auto; width: 200px; }
+        }
+
+        @media (max-width: 380px) {
+            .icon-btn { width: 30px; height: 30px; }
+            .bubble { font-size: 13px; padding: 10px 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Menejer profili panel backdrop -->
+    <div class="panel-backdrop" id="panelBackdrop" onclick="panelYopish()"></div>
+
+    <!-- Menejer profili panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="panel-header">
+            <div>
+                <h2>Menejer profili</h2>
+                <p>AI uslubini sozlang</p>
+            </div>
+            <button class="panel-close" onclick="panelYopish()">×</button>
+        </div>
+
+        <div class="panel-body">
+
+            <!-- Menejer ismi -->
+            <div class="field-group">
+                <label class="field-label">Menejer ismi</label>
+                <input class="field-input" type="text" id="pIsm"
+                       placeholder="masalan: Sardor aka" maxlength="40"/>
+            </div>
+
+            <!-- Lavozim -->
+            <div class="field-group">
+                <label class="field-label">Lavozim</label>
+                <input class="field-input" type="text" id="pLavozim"
+                       placeholder="masalan: Logistika menejeri" maxlength="60"/>
+            </div>
+
+            <!-- Kompaniya -->
+            <div class="field-group">
+                <label class="field-label">Kompaniya / Jamoa</label>
+                <input class="field-input" type="text" id="pKompaniya"
+                       placeholder="masalan: AlgoFleet" maxlength="60"/>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Muloqot uslubi -->
+            <div class="field-group">
+                <label class="field-label">Muloqot uslubi</label>
+                <div class="style-grid" id="styleGrid">
+                    <label class="style-card" data-uslub="qisqa">
+                        <input type="radio" name="uslub" value="qisqa"/>
+                        <span class="style-card-icon">⚡</span>
+                        <span class="style-card-text">Qisqa va aniq</span>
+                    </label>
+                    <label class="style-card" data-uslub="rasmiy">
+                        <input type="radio" name="uslub" value="rasmiy"/>
+                        <span class="style-card-icon">👔</span>
+                        <span class="style-card-text">Rasmiy</span>
+                    </label>
+                    <label class="style-card" data-uslub="dustona">
+                        <input type="radio" name="uslub" value="dustona"/>
+                        <span class="style-card-icon">🤝</span>
+                        <span class="style-card-text">Do'stona</span>
+                    </label>
+                    <label class="style-card" data-uslub="qatiy">
+                        <input type="radio" name="uslub" value="qatiy"/>
+                        <span class="style-card-icon">🎯</span>
+                        <span class="style-card-text">Qat'iy</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Maxsus qoidalar -->
+            <div class="field-group">
+                <label class="field-label">Maxsus qoidalar va ko'rsatmalar</label>
+                <textarea class="field-textarea" id="pQoidalar" rows="5"
+                    placeholder="Masalan:&#10;- Kechikish uchun 3 ogohlantirish qoidasi bor&#10;- Maosh har oy 5-sida to'lanadi&#10;- Muammoni avval menga xabar qil, o'zing hal qilma"></textarea>
+            </div>
+
+            <!-- Prompt preview -->
+            <div class="field-group">
+                <label class="field-label">Yaratilgan ko'rsatma (preview)</label>
+                <div class="prompt-preview" id="promptPreview">
+                    Sozlamalarni to'ldirganingizdan so'ng bu yerda ko'rsatma ko'rinadi...
+                </div>
+            </div>
+
+        </div>
+
+        <div class="panel-footer">
+            <button class="save-btn" onclick="sozlamalarSaqlash()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Saqlash va qo'llash
+            </button>
+        </div>
+    </div>
+
+    <!-- Saqlandi bildirishnomasi -->
+    <div class="toast" id="toast">✓ Sozlamalar saqlandi</div>
+
+    <!-- Sarlavha -->
+    <div class="header">
+        <div class="header-logo">AB</div>
+        <div class="header-info">
+            <h1>ALGO BRAIN</h1>
+            <p id="headerSubtitle">Menejer uslubida javob beradi</p>
+        </div>
+        <div class="header-actions">
+            <!-- Yangi suhbat tugmasi + tasdiqlash popover -->
+            <div class="new-chat-wrap">
+                <button class="icon-btn" id="newChatBtn" onclick="yangiSuhbatToggle()" title="Yangi suhbat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                </button>
+                <div class="confirm-pop" id="confirmPop" style="display:none">
+                    <p>Joriy suhbat o'chiriladi. Davom etasizmi?</p>
+                    <div class="confirm-pop-btns">
+                        <button class="confirm-yes" onclick="suhbatTozalash()">Ha, tozala</button>
+                        <button class="confirm-no"  onclick="yangiSuhbatYopish()">Bekor qil</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Menejer profili tugmasi -->
+            <button class="icon-btn" id="profilBtn" onclick="panelOchish()" title="Menejer profili">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+            </button>
+            <!-- Eksport tugmasi -->
+            <div class="export-wrap">
+                <button class="icon-btn" id="exportBtn" onclick="eksportToggle()" title="Suhbatni eksport qilish">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </button>
+                <div class="export-pop" id="exportPop" style="display:none">
+                    <button class="export-item" onclick="eksportNusxa()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                        </svg>
+                        Nusxa olish
+                    </button>
+                    <button class="export-item" onclick="eksportTxt()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        TXT yuklab olish
+                    </button>
+                </div>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                Faol
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat hududi -->
+    <div class="chat-area" id="chatArea">
+        <div class="welcome" id="welcomeMsg">
+            <div class="welcome-icon">🧠</div>
+            <h2>ALGO BRAIN ga xush kelibsiz</h2>
+            <p>Savol yoki muammoingizni yozing.<br>
+               <span class="welcome-name" id="welcomeName">Menejer</span> uslubida aniq javob beraman.</p>
+        </div>
+    </div>
+
+    <!-- Input hududi -->
+    <div class="input-area">
+        <div class="preview-area" id="previewArea">
+            <div class="preview-item" id="previewItem">
+                <button class="preview-remove" onclick="faylOchirish()">×</button>
+            </div>
+        </div>
+
+        <div class="input-wrapper">
+            <button class="attach-btn" onclick="document.getElementById('faylInput').click()" title="Rasm yoki fayl yuklash">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                </svg>
+            </button>
+            <input type="file" id="faylInput" accept="image/*,.pdf,.txt,.csv,.md"
+                   onchange="faylTanlash(event)"/>
+            <textarea id="messageInput" placeholder="Savolingizni yozing..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="xabarYuborish()">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+        <div class="input-hint">Rasm · PDF · TXT · CSV qo'llab-quvvatlanadi · maks 10MB</div>
+    </div>
+
+    <script>
+        // ============================================================
+        // SOZLAMALAR — localStorage dan o'qiladi / yoziladi
+        // ============================================================
+        const SOZLAMALAR_KALIT = 'algo_brain_profil';
+
+        const standartSozlamalar = {
+            ism:       'Sardor aka',
+            lavozim:   'Menejer',
+            kompaniya: '',
+            uslub:     'qisqa',
+            qoidalar:  '',
+        };
+
+        // Saqlangan sozlamalarni yuklash
+        function sozlamalarYuklash() {
+            try {
+                const saqlangan = localStorage.getItem(SOZLAMALAR_KALIT);
+                return saqlangan ? { ...standartSozlamalar, ...JSON.parse(saqlangan) } : { ...standartSozlamalar };
+            } catch {
+                return { ...standartSozlamalar };
+            }
+        }
+
+        // Sozlamalardan system prompt yaratish
+        function systemPromptYaratish(s) {
+            const uslubTavsif = {
+                qisqa:   'Qisqa, aniq va amaliy javoblar bering. Ortiqcha so\'z ishlatmang.',
+                rasmiy:  'Rasmiy va professional uslubda muloqot qiling.',
+                dustona: 'Do\'stona va samimiy uslubda, lekin mas\'uliyatli muloqot qiling.',
+                qatiy:   'Qat\'iy va to\'g\'ridan-to\'g\'ri uslubda. Har bir holat uchun aniq ko\'rsatma bering.',
+            };
+
+            let prompt = `Siz "${s.ism}" ismli`;
+            if (s.lavozim)   prompt += ` ${s.lavozim}`;
+            if (s.kompaniya) prompt += ` (${s.kompaniya})`;
+            prompt += `ning AI assistentisiz. Jamoa a'zolari sizga ish jarayonida savol berishadi.\n\n`;
+
+            prompt += `Muloqot uslubi: ${uslubTavsif[s.uslub] || uslubTavsif.qisqa}\n`;
+            prompt += `Til: O'zbek tilida muloqot qiling.\n\n`;
+
+            if (s.qoidalar && s.qoidalar.trim()) {
+                prompt += `Qoidalar va ko'rsatmalar:\n${s.qoidalar.trim()}\n\n`;
+            }
+
+            prompt += `Muhim:\n`;
+            prompt += `- "Men AI man" yoki "Men Claude man" deb HECH QACHON aytmang\n`;
+            prompt += `- Siz menejer sifatida, birinchi shaxsda javob bering\n`;
+            prompt += `- Bilmasangiz — "Bu haqida menga to'g'ridan-to'g'ri murojaat qiling" deb ayting\n`;
+            prompt += `- Rasm yuborilsa — uni ko'rib, holat haqida menejer sifatida sharh bering`;
+
+            return prompt;
+        }
+
+        // ============================================================
+        // HOLAT O'ZGARUVCHILARI
+        // ============================================================
+        let profil       = sozlamalarYuklash();
+        let suhbatTarixi = [];
+        let yuborilmoqda = false;
+        let tanlananFayl = null;
+
+        // Sahifa yuklanganda
+        (function boshlash() {
+            headerYangilash();
+            xushKelibsizYangilash();
+        })();
+
+        // Sarlavha subtitlini yangilash
+        function headerYangilash() {
+            const sub = document.getElementById('headerSubtitle');
+            if (profil.ism) {
+                sub.textContent = `${profil.ism} uslubida javob beradi`;
+            } else {
+                sub.textContent = 'Menejer uslubida javob beradi';
+            }
+        }
+
+        // Xush kelibsiz matnni yangilash
+        function xushKelibsizYangilash() {
+            const el = document.getElementById('welcomeName');
+            if (el) el.textContent = profil.ism || 'Menejer';
+        }
+
+
+        // ============================================================
+        // SOZLAMALAR PANELI
+        // ============================================================
+        function panelOchish() {
+            // Joriy sozlamalarni formlarga yuklash
+            document.getElementById('pIsm').value       = profil.ism;
+            document.getElementById('pLavozim').value   = profil.lavozim;
+            document.getElementById('pKompaniya').value = profil.kompaniya;
+            document.getElementById('pQoidalar').value  = profil.qoidalar;
+
+            // Uslub kartasini belgilash
+            uslubBelgilash(profil.uslub);
+
+            // Prompt preview ni yangilash
+            promptPreviewYangilash();
+
+            document.getElementById('settingsPanel').classList.add('ochiq');
+            document.getElementById('panelBackdrop').classList.add('korsatish');
+            document.getElementById('profilBtn').classList.add('faol');
+        }
+
+        function panelYopish() {
+            document.getElementById('settingsPanel').classList.remove('ochiq');
+            document.getElementById('panelBackdrop').classList.remove('korsatish');
+            document.getElementById('profilBtn').classList.remove('faol');
+        }
+
+        // Radio kartani belgilash
+        function uslubBelgilash(uslubQiymati) {
+            document.querySelectorAll('.style-card').forEach(karta => {
+                const radio = karta.querySelector('input[type="radio"]');
+                const tanlangan = karta.dataset.uslub === uslubQiymati;
+                radio.checked = tanlangan;
+                karta.classList.toggle('tanlangan', tanlangan);
+            });
+        }
+
+        // Uslub kartasini bosish
+        document.querySelectorAll('.style-card').forEach(karta => {
+            karta.addEventListener('click', function() {
+                uslubBelgilash(this.dataset.uslub);
+                promptPreviewYangilash();
+            });
+        });
+
+        // Matn o'zgarganda preview yangilash
+        ['pIsm', 'pLavozim', 'pKompaniya', 'pQoidalar'].forEach(id => {
+            document.getElementById(id).addEventListener('input', promptPreviewYangilash);
+        });
+
+        // Prompt preview ni yangilash (panel ichida)
+        function promptPreviewYangilash() {
+            const tanlananUslub = document.querySelector('.style-card.tanlangan')?.dataset.uslub || 'qisqa';
+            const vaqtinchalikProfil = {
+                ism:       document.getElementById('pIsm').value       || standartSozlamalar.ism,
+                lavozim:   document.getElementById('pLavozim').value   || '',
+                kompaniya: document.getElementById('pKompaniya').value || '',
+                uslub:     tanlananUslub,
+                qoidalar:  document.getElementById('pQoidalar').value  || '',
+            };
+            document.getElementById('promptPreview').textContent = systemPromptYaratish(vaqtinchalikProfil);
+        }
+
+        // Sozlamalarni saqlash va qo'llash
+        function sozlamalarSaqlash() {
+            const tanlananUslub = document.querySelector('.style-card.tanlangan')?.dataset.uslub || 'qisqa';
+
+            profil = {
+                ism:       document.getElementById('pIsm').value.trim()       || standartSozlamalar.ism,
+                lavozim:   document.getElementById('pLavozim').value.trim()   || '',
+                kompaniya: document.getElementById('pKompaniya').value.trim() || '',
+                uslub:     tanlananUslub,
+                qoidalar:  document.getElementById('pQoidalar').value.trim()  || '',
+            };
+
+            // localStorage ga saqlash
+            localStorage.setItem(SOZLAMALAR_KALIT, JSON.stringify(profil));
+
+            // Suhbat tarixini tozalash — yangi profil yangi suhbatdan boshlanadi
+            suhbatTarixi = [];
+
+            // UI ni yangilash
+            headerYangilash();
+            xushKelibsizYangilash();
+
+            // Panelni yopish va toast ko'rsatish
+            panelYopish();
+            toastKorsatish('✓ Sozlamalar saqlandi');
+        }
+
+        // ============================================================
+        // YANGI SUHBAT — tozalash
+        // ============================================================
+        function yangiSuhbatToggle() {
+            const pop = document.getElementById('confirmPop');
+            // Suhbat bo'sh bo'lsa — to'g'ridan tozalash, tasdiqlash shart emas
+            if (suhbatTarixi.length === 0) { suhbatTozalash(); return; }
+            const korsatilgan = pop.style.display !== 'none';
+            pop.style.display = korsatilgan ? 'none' : 'block';
+            document.getElementById('newChatBtn').classList.toggle('faol', !korsatilgan);
+        }
+
+        function yangiSuhbatYopish() {
+            document.getElementById('confirmPop').style.display = 'none';
+            document.getElementById('newChatBtn').classList.remove('faol');
+        }
+
+        function suhbatTozalash() {
+            // Suhbat tarixini va chatni tozalash
+            suhbatTarixi = [];
+
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = `
+                <div class="welcome" id="welcomeMsg">
+                    <div class="welcome-icon">🧠</div>
+                    <h2>ALGO BRAIN ga xush kelibsiz</h2>
+                    <p>Savol yoki muammoingizni yozing.<br>
+                       <span class="welcome-name" id="welcomeName">${profil.ism || 'Menejer'}</span> uslubida aniq javob beraman.</p>
+                </div>
+            `;
+
+            // Faylni ham tozalash
+            faylOchirish();
+
+            yangiSuhbatYopish();
+            toastKorsatish('✓ Yangi suhbat boshlandi');
+        }
+
+        // ============================================================
+        // EKSPORT — nusxa va TXT
+        // ============================================================
+        function eksportToggle() {
+            const pop = document.getElementById('exportPop');
+            if (suhbatTarixi.length === 0) {
+                toastKorsatish('Eksport qilish uchun suhbat yo\'q'); return;
+            }
+            const korsatilgan = pop.style.display !== 'none';
+            pop.style.display = korsatilgan ? 'none' : 'block';
+            document.getElementById('exportBtn').classList.toggle('faol', !korsatilgan);
+        }
+
+        function eksportYopish() {
+            document.getElementById('exportPop').style.display = 'none';
+            document.getElementById('exportBtn').classList.remove('faol');
+        }
+
+        // Suhbatni matn formatida tayyorlash
+        function suhbatMatniYaratish() {
+            const sana = new Date().toLocaleDateString('uz-UZ');
+            let matn = `ALGO BRAIN — Suhbat\n`;
+            matn    += `Menejer: ${profil.ism}${profil.lavozim ? ' · ' + profil.lavozim : ''}\n`;
+            matn    += `Sana: ${sana}\n`;
+            matn    += '─'.repeat(40) + '\n\n';
+
+            suhbatTarixi.forEach(xabar => {
+                const kim  = xabar.role === 'user' ? 'Xodim' : profil.ism || 'Menejer';
+                // content massiv bo'lsa (rasm/fayl bilan) — faqat matn qismini olish
+                let content = '';
+                if (typeof xabar.content === 'string') {
+                    content = xabar.content;
+                } else if (Array.isArray(xabar.content)) {
+                    const matnQism = xabar.content.find(q => q.type === 'text');
+                    content = matnQism ? matnQism.text : '[Fayl/Rasm yuborildi]';
+                }
+                matn += `${kim}:\n${content}\n\n`;
+            });
+
+            return matn.trim();
+        }
+
+        // Clipboard ga nusxa olish
+        async function eksportNusxa() {
+            eksportYopish();
+            try {
+                await navigator.clipboard.writeText(suhbatMatniYaratish());
+                toastKorsatish('✓ Suhbat nusxalandi');
+            } catch {
+                toastKorsatish('Nusxalash amalga oshmadi');
+            }
+        }
+
+        // TXT fayl sifatida yuklab olish
+        function eksportTxt() {
+            eksportYopish();
+            const matn    = suhbatMatniYaratish();
+            const blob    = new Blob([matn], { type: 'text/plain;charset=utf-8' });
+            const url     = URL.createObjectURL(blob);
+            const a       = document.createElement('a');
+            const sana    = new Date().toISOString().slice(0, 10);
+            a.href        = url;
+            a.download    = `algo-brain-suhbat-${sana}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toastKorsatish('✓ Fayl yuklab olindi');
+        }
+
+        // Popover dan tashqari bosilsa — yopish
+        document.addEventListener('click', function(e) {
+            const newWrap    = document.querySelector('.new-chat-wrap');
+            const exportWrap = document.querySelector('.export-wrap');
+            if (newWrap    && !newWrap.contains(e.target))    yangiSuhbatYopish();
+            if (exportWrap && !exportWrap.contains(e.target)) eksportYopish();
+        });
+
+        // Toast bildirishnomasi
+        function toastKorsatish(matn) {
+            const toast = document.getElementById('toast');
+            toast.textContent = matn;
+            toast.classList.add('korsatish');
+            setTimeout(() => toast.classList.remove('korsatish'), 2500);
+        }
+
+        // ============================================================
+        // FAYL TANLASH
+        // ============================================================
+        function faylTanlash(event) {
+            const fayl = event.target.files[0];
+            if (!fayl) return;
+
+            if (fayl.size > 10 * 1024 * 1024) {
+                alert('Fayl hajmi 10MB dan oshmasligi kerak.'); event.target.value = ''; return;
+            }
+
+            const reader = new FileReader();
+
+            if (fayl.type.startsWith('image/')) {
+                reader.onload = function(e) {
+                    tanlananFayl = { tur:'image', mediaType:fayl.type, data:e.target.result.split(',')[1], nomi:fayl.name, preview:e.target.result };
+                    prevyuKorsatish();
+                };
+                reader.readAsDataURL(fayl);
+            } else if (fayl.type === 'application/pdf') {
+                reader.onload = function(e) {
+                    tanlananFayl = { tur:'document', mediaType:'application/pdf', data:e.target.result.split(',')[1], nomi:fayl.name, preview:null };
+                    prevyuKorsatish();
+                };
+                reader.readAsDataURL(fayl);
+            } else {
+                reader.onload = function(e) {
+                    tanlananFayl = { tur:'matn', matn:e.target.result, nomi:fayl.name, preview:null };
+                    prevyuKorsatish();
+                };
+                reader.readAsText(fayl, 'UTF-8');
+            }
+            event.target.value = '';
+        }
+
+        function prevyuKorsatish() {
+            if (!tanlananFayl) return;
+            const previewItem = document.getElementById('previewItem');
+            let ichki = '';
+            if (tanlananFayl.tur === 'image') {
+                ichki = `<img class="preview-thumb" src="${tanlananFayl.preview}"/><div class="preview-info"><span class="preview-name">${tanlananFayl.nomi}</span><span class="preview-type">Rasm</span></div>`;
+            } else if (tanlananFayl.tur === 'document') {
+                ichki = `<span class="preview-file-icon">📄</span><div class="preview-info"><span class="preview-name">${tanlananFayl.nomi}</span><span class="preview-type">PDF hujjat</span></div>`;
+            } else {
+                ichki = `<span class="preview-file-icon">📝</span><div class="preview-info"><span class="preview-name">${tanlananFayl.nomi}</span><span class="preview-type">Matn fayli</span></div>`;
+            }
+            previewItem.innerHTML = ichki + `<button class="preview-remove" onclick="faylOchirish()">×</button>`;
+            document.getElementById('previewArea').classList.add('korsatish');
+        }
+
+        function faylOchirish() {
+            tanlananFayl = null;
+            document.getElementById('previewArea').classList.remove('korsatish');
+        }
+
+        // ============================================================
+        // YORDAMCHI FUNKSIYALAR
+        // ============================================================
+        function hozirgiVaqt() {
+            return new Date().toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit' });
+        }
+
+        function xabarQosish(matn, tur, faylMalumot) {
+            const chatArea = document.getElementById('chatArea');
+            const tabriq = document.getElementById('welcomeMsg');
+            if (tabriq) tabriq.remove();
+
+            const div = document.createElement('div');
+            div.className = `message ${tur}`;
+
+            const avatarHarf  = tur === 'manager' ? profil.ism?.[0]?.toUpperCase() || 'M' : 'S';
+            const avatarKlass = tur === 'manager' ? 'manager-avatar' : 'user-avatar';
+
+            let faylHTML = '';
+            if (faylMalumot) {
+                if (faylMalumot.tur === 'image') {
+                    faylHTML = `<img class="chat-image" src="${faylMalumot.preview}" alt="Rasm"/>`;
+                } else if (faylMalumot.tur === 'document') {
+                    faylHTML = `<div class="chat-file"><span class="chat-file-icon">📄</span><span class="chat-file-name">${faylMalumot.nomi}</span></div>`;
+                } else {
+                    faylHTML = `<div class="chat-file"><span class="chat-file-icon">📝</span><span class="chat-file-name">${faylMalumot.nomi}</span></div>`;
+                }
+            }
+
+            div.innerHTML = `
+                <div class="avatar ${avatarKlass}">${avatarHarf}</div>
+                <div class="bubble-wrap">
+                    <div class="bubble">${faylHTML}${matn}</div>
+                    <div class="message-time">${hozirgiVaqt()}</div>
+                </div>
+            `;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function yozilmoqdaKorsatish() {
+            const chatArea = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'message manager'; div.id = 'typingIndicator';
+            div.innerHTML = `
+                <div class="avatar manager-avatar">${profil.ism?.[0]?.toUpperCase() || 'M'}</div>
+                <div class="bubble-wrap"><div class="bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
+            `;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function yozilmoqdaOchirish() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        // ============================================================
+        // DEMO JAVOBLAR — kalit so'zlar bo'yicha
+        // ============================================================
+        const demoJavoblar = [
+            {
+                kalitlar: ['kechikdi', 'kechikmoq', 'kech', 'kelmadi', 'late', 'vaqtida'],
+                javob: 'Haydovchi kechiksa — avval sababini aniqla. Ob-havo yoki trafik bo\'lsa, tushunarli. Uzrsiz kechikish bo\'lsa — ogohlantir va jurnalga yoz. Ikkinchi marta bo\'lsa menga xabar ber.',
+            },
+            {
+                kalitlar: ['yo\'l', 'marshrut', 'qaysi yo\'l', 'qayerdan', 'route', 'adashdi'],
+                javob: 'Marshrut bo\'yicha: GPS dan foydalansin, o\'z bilganicha ketmasin. Muammo bo\'lsa — darhol menga xabar ber, men alternativ ko\'rsataman.',
+            },
+            {
+                kalitlar: ['mashina', 'avto', 'buzildi', 'nosoz', 'ta\'mir', 'texnik', 'ishlamay'],
+                javob: 'Mashina to\'xtab qolsa:\n1. Xavfsiz joyga tort\n2. Menga darhol qo\'ng\'iroq qil\n3. O\'zing ta\'mirlamoqchi bo\'lma\n\nMen texnik xizmat bilan bog\'lanaman.',
+            },
+            {
+                kalitlar: ['mijoz', 'client', 'shikoyat', 'norozi', 'xafa', 'mushtari'],
+                javob: 'Mijoz shikoyat qilsa:\n1. Tinglang, to\'xtatmang\n2. Kechirim so\'rang\n3. Muammoni yozib oling\n4. Menga darhol xabar bering\n\nO\'zingiz va\'da bermang — bu mening vazifattim.',
+            },
+            {
+                kalitlar: ['maosh', 'pul', 'to\'lov', 'oylik', 'haq', 'salary', 'pay'],
+                javob: 'To\'lov masalalari faqat men orqali hal qilinadi. Bugun yoki ertaga gaplashamiz. Hozircha ishni davom ettiravering.',
+            },
+            {
+                kalitlar: ['dam olish', 'bayram', 'ta\'til', 'ishlamayman', 'off', 'yosh'],
+                javob: 'Dam olish arizasi kamida 3 kun oldin berilishi kerak. Menga yozing — jadval bo\'yicha ko\'rib chiqaman.',
+            },
+            {
+                kalitlar: ['rasm', 'photo', 'yubordi', 'ko\'r', 'qaradi'],
+                javob: 'Rasmni ko\'rdim. Holat haqida qo\'shimcha ma\'lumot bering — nima bo\'ldi, qachon, qayerda. Shunda aniq ko\'rsatma beraman.',
+            },
+            {
+                kalitlar: ['fayl', 'hujjat', 'pdf', 'document'],
+                javob: 'Hujjatni qabul qildim. Ko\'rib chiqaman. Savolingiz bo\'lsa — ayting.',
+            },
+            {
+                kalitlar: ['nima qil', 'qanday qil', 'yordam', 'bilmayman', 'tushunmadim', 'nima bo\'l'],
+                javob: 'Muammoni aniqroq ayt: nima bo\'ldi, qachon, kim bilan. Shunda aniq yo\'riqnoma beraman.',
+            },
+            {
+                kalitlar: ['salom', 'assalomu', 'xayr', 'hayr', 'rahmat', 'ok', 'tushunarli'],
+                javob: 'Qabul. Boshqa savol bo\'lsa — ayting.',
+            },
+        ];
+
+        // Savolga mos demo javob topish
+        function demoJavobTopish(savol, fayl) {
+            // Fayl yuborilgan bo'lsa
+            if (fayl) {
+                if (fayl.tur === 'image') return 'Rasmni qabul qildim. Ko\'rib chiqaman. Bu haqida nima demoqchi edingiz?';
+                if (fayl.tur === 'document') return 'Hujjatni oldim. Ko\'rib chiqaman va javob beraman.';
+                return `"${fayl.nomi}" faylini qabul qildim.`;
+            }
+
+            const kichik = savol.toLowerCase();
+            for (const element of demoJavoblar) {
+                for (const kalit of element.kalitlar) {
+                    if (kichik.includes(kalit)) return element.javob;
+                }
+            }
+
+            // Hech narsa mos kelmasa
+            return 'Tushundim. Holat haqida qo\'shimcha ma\'lumot bering — nima bo\'ldi, qachon, kim bilan. Shunda aniq ko\'rsatma beraman.';
+        }
+
+        // ============================================================
+        // XABAR YUBORISH
+        // ============================================================
+        function xabarYuborish() {
+            if (yuborilmoqda) return;
+            const input = document.getElementById('messageInput');
+            const matn  = input.value.trim();
+            if (!matn && !tanlananFayl) return;
+
+            yuborilmoqda = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            const yuborilayotganFayl = tanlananFayl;
+            xabarQosish(matn, 'user', yuborilayotganFayl);
+            input.value = ''; input.style.height = 'auto';
+            faylOchirish();
+            yozilmoqdaKorsatish();
+
+            // Suhbat tarixini saqlash (eksport uchun)
+            suhbatTarixi.push({ role: 'user', content: matn || '[Fayl yuborildi]' });
+
+            // Kechikish bilan javob — haqiqiy his uchun
+            setTimeout(() => {
+                yozilmoqdaOchirish();
+                const javob = demoJavobTopish(matn, yuborilayotganFayl);
+                xabarQosish(javob, 'manager');
+                suhbatTarixi.push({ role: 'assistant', content: javob });
+                yuborilmoqda = false;
+                document.getElementById('sendBtn').disabled = false;
+                input.focus();
+            }, 900 + Math.random() * 700);
+        }
+
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); xabarYuborish(); }
+        });
+
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>
