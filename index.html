@@ -1231,7 +1231,17 @@
                 xabarQosish(javob, 'manager');
             } catch (err) {
                 yozilmoqdaOchirish();
-                if (apiKalit) xabarQosish(`Xato: ${err.message}`, 'xato manager');
+                if (!apiKalit) return;
+                // Xato turini aniqroq ko'rsatish
+                let xabarMatni;
+                if (err.message === 'Failed to fetch') {
+                    xabarMatni = 'Server bilan bog\'lanib bo\'lmadi. Sabab: internet yo\'q, yoki API kalit muammosi.';
+                } else if (err.message.toLowerCase().includes('credit') || err.message.toLowerCase().includes('balance')) {
+                    xabarMatni = 'API hisob kreditlari tugagan. console.anthropic.com → Billing dan kredit qo\'shing.';
+                } else {
+                    xabarMatni = err.message;
+                }
+                xabarQosish(xabarMatni, 'xato manager');
             } finally {
                 yuborilmoqda = false;
                 document.getElementById('sendBtn').disabled = false;
