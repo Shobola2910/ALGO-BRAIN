@@ -297,6 +297,45 @@
         .toast.korsatish { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* ============================================================
+           REJIM TABS — Chat / Strateg
+        ============================================================ */
+        .mode-bar {
+            display: flex;
+            gap: 6px;
+            padding: 10px 24px 0;
+            background: #0d0d14;
+            flex-shrink: 0;
+        }
+        .mode-tab {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 16px;
+            border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; border: 1.5px solid #1e1e30;
+            color: #555570; background: none;
+            transition: all 0.2s;
+        }
+        .mode-tab:hover { border-color: #3a3a50; color: #9090b0; }
+        .mode-tab.faol {
+            background: #13132a;
+            border-color: #7c6fff;
+            color: #c0b8ff;
+        }
+        .mode-tab svg { width: 14px; height: 14px; }
+
+        /* Strateg bubble — biroz farqli rang */
+        .message.strateg .bubble {
+            background: #0f1a2a;
+            border-color: #1e3050;
+            color: #c8d8f0;
+        }
+
+        @media (max-width: 640px) {
+            .mode-bar { padding: 8px 14px 0; }
+            .mode-tab { padding: 6px 12px; font-size: 12px; }
+        }
+
+        /* ============================================================
            CHAT HUDUDI
         ============================================================ */
         .chat-area {
@@ -676,6 +715,22 @@
         </div>
     </div>
 
+    <!-- Rejim tabs -->
+    <div class="mode-bar">
+        <button class="mode-tab faol" id="tabChat" onclick="rejimOzgartirish('chat')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            Chat
+        </button>
+        <button class="mode-tab" id="tabStrateg" onclick="rejimOzgartirish('strateg')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Strateg
+        </button>
+    </div>
+
     <!-- Chat hududi -->
     <div class="chat-area" id="chatArea">
         <div class="welcome" id="welcomeMsg">
@@ -765,6 +820,80 @@
         }
 
         // ============================================================
+        // XODIMLAR BAZASI — B1 Department
+        // ============================================================
+        const XODIMLAR = [
+            { kod:'B115', ism:'Shoxjahon',      taxallus:'Beck',   lavozim:'Employee', kunlar:['MO','TU','WE','TH','FR','SA'], boshlanish:'09:00', tugash:'18:00' },
+            { kod:'C465', ism:'Azimjon',         taxallus:'Arthur', lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'01:00', tugash:'10:00' },
+            { kod:'C920', ism:'Sanjar',          taxallus:'Charles',lavozim:'Employee', kunlar:['MO','TU','WE','TH','FR','SA'], boshlanish:'17:00', tugash:'02:00' },
+            { kod:'D415', ism:'Dovudxon',        taxallus:'David',  lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'01:00', tugash:'10:00' },
+            { kod:'H385', ism:'Habibulloh',      taxallus:'Habi',   lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'17:00', tugash:'02:00' },
+            { kod:'I220', ism:'Ismoilbek',       taxallus:'Ismail', lavozim:'Manager',  kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'00:00', tugash:'09:00' },
+            { kod:'L860', ism:'Ismoil',          taxallus:'Lucas',  lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'09:00', tugash:'18:00' },
+            { kod:'N950', ism:'Xojiakbar',       taxallus:'Nate',   lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','FR'], boshlanish:'00:00', tugash:'09:00' },
+            { kod:'S145', ism:'Shaxrizodabonu',  taxallus:'Sue',    lavozim:'Employee', kunlar:['SU','MO','TU','WE','TH','SA'], boshlanish:'17:00', tugash:'02:00' },
+            { kod:'S180', ism:'Sarvar',          taxallus:'Mike',   lavozim:'Manager',  kunlar:['SU','TU','WE','TH','FR','SA'], boshlanish:'17:00', tugash:'02:00' },
+        ];
+
+        // Hozir qaysi xodimlar smenada ekanini aniqlash
+        function hozirSmenada() {
+            const h   = new Date();
+            const kun = ['SU','MO','TU','WE','TH','FR','SA'][h.getDay()];
+            const min = h.getHours() * 60 + h.getMinutes();
+
+            return XODIMLAR.filter(x => {
+                if (!x.kunlar.includes(kun)) return false;
+                const [bH, bM] = x.boshlanish.split(':').map(Number);
+                const [tH, tM] = x.tugash.split(':').map(Number);
+                const b = bH * 60 + bM;
+                const t = tH * 60 + tM;
+                // Tundan o'tadigan smena (masalan 17:00–02:00)
+                if (t < b) return min >= b || min < t;
+                return min >= b && min < t;
+            });
+        }
+
+        // Strateg rejimi uchun to'liq system prompt
+        function strategPromptYaratish() {
+            const kunNomi = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'][new Date().getDay()];
+            const sana    = new Date().toLocaleDateString('uz-UZ');
+            const vaqt    = new Date().toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit' });
+
+            const barcha = XODIMLAR.map(x =>
+                `• #${x.kod} ${x.ism} (${x.taxallus}) — ${x.lavozim} | Smena: ${x.boshlanish}–${x.tugash} | Dam: ${x.kunlar.length === 6 ? 'dam kunlari bitta' : ''}`
+            ).join('\n');
+
+            const ishda = hozirSmenada();
+            const ishdaMatn = ishda.length
+                ? ishda.map(x => `• #${x.kod} ${x.ism} (${x.taxallus}) — ${x.lavozim}`).join('\n')
+                : '• Hozir hech kim smenada emas';
+
+            return `Siz tajribali biznes-strateg va HR maslahatchiisiz. B1 Department menejeriga yordam berasiz.
+
+Bugun: ${kunNomi}, ${sana} — soat ${vaqt}
+
+━━━ BARCHA XODIMLAR (10 ta) ━━━
+${barcha}
+
+━━━ HOZIR SMENADA ━━━
+${ishdaMatn}
+
+Sizning vazifangiz:
+1. Menejer tasvirlagan holatni chuqur tahlil qiling
+2. Aniq strategiya va harakatlar rejasi taklif qiling
+3. Kim (qaysi xodim, kodi bilan) nima qilishi kerakligini belgilang
+4. Kelgusida bunday muammoning oldini olish uchun tavsiya bering
+
+Javob strukturasi:
+📊 TAHLIL — Nima bo'lyapti va nima sabab
+🎯 STRATEGIYA — Asosiy yo'nalish
+✅ HARAKATLAR REJASI — Kimga, nima, qachon (xodim kodlari bilan)
+⚠️ DIQQAT — E'tibor berish kerak bo'lgan jihatlar
+
+O'zbek tilida, aniq va professional javob bering.`;
+        }
+
+        // ============================================================
         // HOLAT O'ZGARUVCHILARI
         // ============================================================
         let apiKalit     = localStorage.getItem('algo_brain_key') || '';
@@ -772,6 +901,7 @@
         let suhbatTarixi = [];
         let yuborilmoqda = false;
         let tanlananFayl = null;
+        let rejim        = 'chat'; // 'chat' | 'strateg'
 
         // Sahifa yuklanganda
         (function boshlash() {
@@ -812,17 +942,54 @@
         // Sarlavha subtitlini yangilash
         function headerYangilash() {
             const sub = document.getElementById('headerSubtitle');
-            if (profil.ism) {
+            if (rejim === 'strateg') {
+                sub.textContent = 'AI Strateg — B1 Department';
+            } else if (profil.ism) {
                 sub.textContent = `${profil.ism} uslubida javob beradi`;
             } else {
                 sub.textContent = 'Menejer uslubida javob beradi';
             }
         }
 
-        // Xush kelibsiz matnni yangilash
         function xushKelibsizYangilash() {
             const el = document.getElementById('welcomeName');
             if (el) el.textContent = profil.ism || 'Menejer';
+        }
+
+        // Rejim almashtirish
+        function rejimOzgartirish(yangi) {
+            rejim = yangi;
+            suhbatTarixi = [];
+
+            document.getElementById('tabChat').classList.toggle('faol',   yangi === 'chat');
+            document.getElementById('tabStrateg').classList.toggle('faol', yangi === 'strateg');
+
+            headerYangilash();
+
+            // Chat hududini yangi rejim welcome xabari bilan qayta yuklash
+            const chatArea = document.getElementById('chatArea');
+            if (yangi === 'strateg') {
+                const ishda   = hozirSmenada();
+                const ishdaRo = ishda.map(x => `#${x.kod} ${x.ism}`).join(', ') || 'hech kim yo\'q';
+                chatArea.innerHTML = `
+                    <div class="welcome" id="welcomeMsg">
+                        <div class="welcome-icon">🎯</div>
+                        <h2>Strateg rejimi</h2>
+                        <p>Holatni yoki muammoni tasvirlab bering.<br>
+                           Xodimlar, jadval va sharoit hisobga olinadi.</p>
+                        <p style="margin-top:12px; font-size:13px; color:#3a4a6a; background:#0f1a2a; border:1px solid #1e3050; border-radius:10px; padding:10px 14px; display:inline-block;">
+                           🟢 Hozir smenada: <strong style="color:#5a8aba">${ishdaRo}</strong>
+                        </p>
+                    </div>`;
+            } else {
+                chatArea.innerHTML = `
+                    <div class="welcome" id="welcomeMsg">
+                        <div class="welcome-icon">🧠</div>
+                        <h2>ALGO BRAIN ga xush kelibsiz</h2>
+                        <p>Savol yoki muammoingizni yozing.<br>
+                           <span class="welcome-name" id="welcomeName">${profil.ism || 'Menejer'}</span> uslubida aniq javob beraman.</p>
+                    </div>`;
+            }
         }
 
 
@@ -1106,7 +1273,8 @@
             if (tabriq) tabriq.remove();
 
             const div = document.createElement('div');
-            div.className = `message ${tur}`;
+            // Strateg rejimida menejer javobiga alohida klass qo'shish
+            div.className = `message ${tur}${tur === 'manager' && rejim === 'strateg' ? ' strateg' : ''}`;
 
             const avatarHarf  = tur === 'manager' ? profil.ism?.[0]?.toUpperCase() || 'M' : 'S';
             const avatarKlass = tur === 'manager' ? 'manager-avatar' : 'user-avatar';
@@ -1154,11 +1322,15 @@
         // GOOGLE GEMINI API — bepul, kuniga 1500 so'rov
         // ============================================================
         async function geminiGaYuborish(savolMatni, fayl) {
-            // System promptni birinchi xabar juftligi sifatida yuborish
-            // (systemInstruction o'rniga — barcha versiyalarda ishlaydi)
+            // Rejimga qarab system prompt tanlash
+            const sysPr = rejim === 'strateg' ? strategPromptYaratish() : systemPromptYaratish(profil);
+            const sysAck = rejim === 'strateg'
+                ? 'Tushundim. Xodimlar ma\'lumotlari va jadval bo\'yicha strategik tahlil beraman.'
+                : 'Tushundim. Menejer sifatida javob beraman.';
+
             const contents = [
-                { role: 'user',  parts: [{ text: systemPromptYaratish(profil) }] },
-                { role: 'model', parts: [{ text: 'Tushundim. Menejer sifatida javob beraman.' }] },
+                { role: 'user',  parts: [{ text: sysPr }] },
+                { role: 'model', parts: [{ text: sysAck }] },
             ];
 
             // Oldingi suhbat tarixini qo'shish
