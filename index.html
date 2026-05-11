@@ -1179,14 +1179,14 @@
             tarix.push({ role: 'user', parts: joriyParts });
 
             const javob = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKalit}`,
+                `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKalit}`,
                 {
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     body: JSON.stringify({
                         systemInstruction: { parts: [{ text: systemPromptYaratish(profil) }] },
                         contents: tarix,
-                        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+                        generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
                     }),
                 }
             );
@@ -1207,7 +1207,9 @@
             }
 
             const malumot = await javob.json();
-            const javobMatni = malumot.candidates?.[0]?.content?.parts?.[0]?.text || 'Javob olishda xato';
+            // Gemini 2.5 thinking modelida parts bo'sh kelishi mumkin — barcha parts dan matn yig'ish
+            const parts = malumot.candidates?.[0]?.content?.parts || [];
+            const javobMatni = parts.map(p => p.text || '').join('').trim() || 'Javob olishda xato';
             suhbatTarixi.push({ role: 'assistant', content: javobMatni });
             return javobMatni;
         }
