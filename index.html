@@ -500,10 +500,10 @@
         <div class="modal">
             <div class="modal-logo">AB</div>
             <h2>API kalitini kiriting</h2>
-            <p>ALGO BRAIN ishlashi uchun Anthropic API kaliti kerak.<br>
+            <p>Google Gemini API — <strong style="color:#22c55e">bepul</strong>, kuniga 1500 so'rov.<br>
                Kalit faqat sizning brauzeringizda saqlanadi.</p>
             <input class="modal-input" type="password" id="apiKeyInput"
-                   placeholder="sk-ant-..." autocomplete="off"/>
+                   placeholder="AIzaSy..." autocomplete="off"/>
             <div class="modal-error" id="modalError">Kalit noto'g'ri yoki bo'sh</div>
             <button class="modal-btn" onclick="kalitSaqlash()">Boshlash</button>
         </div>
@@ -790,7 +790,7 @@
         function kalitSaqlash() {
             const kiritilgan = document.getElementById('apiKeyInput').value.trim();
             const xato = document.getElementById('modalError');
-            if (!kiritilgan || !kiritilgan.startsWith('sk-ant-')) {
+            if (!kiritilgan || kiritilgan.length < 10) {
                 xato.style.display = 'block'; return;
             }
             xato.style.display = 'none';
@@ -1151,58 +1151,64 @@
         }
 
         // ============================================================
-        // CLAUDE API
+        // GOOGLE GEMINI API — bepul, kuniga 1500 so'rov
         // ============================================================
-        async function claudeGaYuborish(savolMatni, fayl) {
-            let content;
+        async function geminiGaYuborish(savolMatni, fayl) {
+            // Suhbat tarixini Gemini formatiga (user/model) o'tkazish
+            const tarix = suhbatTarixi.map(x => ({
+                role: x.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: x.content || '' }],
+            }));
+
+            // Joriy xabar uchun parts tayyorlash
+            const joriyParts = [];
 
             if (fayl) {
-                const qismlar = [];
                 if (fayl.tur === 'image') {
-                    qismlar.push({ type:'image', source:{ type:'base64', media_type:fayl.mediaType, data:fayl.data } });
+                    joriyParts.push({ inlineData: { mimeType: fayl.mediaType, data: fayl.data } });
                 } else if (fayl.tur === 'document') {
-                    qismlar.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:fayl.data } });
+                    joriyParts.push({ inlineData: { mimeType: 'application/pdf', data: fayl.data } });
                 } else if (fayl.tur === 'matn') {
                     savolMatni = `${savolMatni}\n\n[Fayl: ${fayl.nomi}]\n${fayl.matn}`;
                 }
-                if (savolMatni) qismlar.push({ type:'text', text:savolMatni });
-                content = qismlar;
-            } else {
-                content = savolMatni;
             }
+            if (savolMatni) joriyParts.push({ text: savolMatni });
 
-            suhbatTarixi.push({ role:'user', content });
+            // Tarixga qo'shish (eksport uchun)
+            suhbatTarixi.push({ role: 'user', content: savolMatni || '[Fayl yuborildi]' });
+            tarix.push({ role: 'user', parts: joriyParts });
 
-            const javob = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'x-api-key': apiKalit,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true',
-                    'content-type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: 'claude-haiku-4-5-20251001',
-                    max_tokens: 1024,
-                    system: systemPromptYaratish(profil),
-                    messages: suhbatTarixi,
-                }),
-            });
+            const javob = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKalit}`,
+                {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: systemPromptYaratish(profil) }] },
+                        contents: tarix,
+                        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+                    }),
+                }
+            );
 
             if (!javob.ok) {
                 const xato = await javob.json().catch(() => ({}));
-                if (javob.status === 401) {
-                    localStorage.removeItem('algo_brain_key');
-                    apiKalit = '';
-                    kalitOzgartirish();
-                    throw new Error('API kalit noto\'g\'ri. Qayta kiriting.');
+                // Kalit noto'g'ri bo'lsa — qayta so'rash
+                if (javob.status === 400 || javob.status === 401 || javob.status === 403) {
+                    const xatoMatn = xato.error?.message || '';
+                    if (xatoMatn.includes('API_KEY') || xatoMatn.includes('key') || javob.status === 403) {
+                        localStorage.removeItem('algo_brain_key');
+                        apiKalit = '';
+                        kalitOzgartirish();
+                        throw new Error('API kalit noto\'g\'ri. Qayta kiriting.');
+                    }
                 }
                 throw new Error(xato.error?.message || `Xato: ${javob.status}`);
             }
 
             const malumot = await javob.json();
-            const javobMatni = malumot.content[0].text;
-            suhbatTarixi.push({ role:'assistant', content:javobMatni });
+            const javobMatni = malumot.candidates?.[0]?.content?.parts?.[0]?.text || 'Javob olishda xato';
+            suhbatTarixi.push({ role: 'assistant', content: javobMatni });
             return javobMatni;
         }
 
@@ -1226,7 +1232,7 @@
             yozilmoqdaKorsatish();
 
             try {
-                const javob = await claudeGaYuborish(matn, yuborilayotganFayl);
+                const javob = await geminiGaYuborish(matn, yuborilayotganFayl);
                 yozilmoqdaOchirish();
                 xabarQosish(javob, 'manager');
             } catch (err) {
