@@ -1179,7 +1179,7 @@
             tarix.push({ role: 'user', parts: joriyParts });
 
             const javob = await fetch(
-                `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKalit}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKalit}`,
                 {
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
